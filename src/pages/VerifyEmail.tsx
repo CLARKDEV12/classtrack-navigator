@@ -1,32 +1,50 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { School, Mail } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const VerifyEmail = () => {
-  const [otp, setOtp] = useState("");
+  const [token, setToken] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { verifyEmail } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otp) return;
+  // Extract token from URL if present
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlToken = params.get('token_hash');
+    
+    if (urlToken) {
+      setToken(urlToken);
+      handleVerification(urlToken);
+    }
+  }, [location]);
+
+  const handleVerification = async (verificationToken: string) => {
+    if (!verificationToken) return;
 
     setIsSubmitting(true);
     try {
-      await verifyEmail(otp);
+      await verifyEmail(verificationToken);
       navigate("/login");
     } catch (error) {
-      // Error handling is done in AuthContext
       console.error("Verification error:", error);
+      // Error is handled in the AuthContext
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleVerification(token);
   };
 
   return (
@@ -42,27 +60,27 @@ const VerifyEmail = () => {
           </div>
           <CardTitle className="text-xl">Verify Your Email</CardTitle>
           <CardDescription>
-            Enter the OTP code sent to your email address
+            {token ? "Verifying your email address..." : "Enter the verification token from your email"}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="otp" className="text-sm font-medium">
-                OTP Code
+              <label htmlFor="token" className="text-sm font-medium">
+                Verification Token
               </label>
               <Input
-                id="otp"
+                id="token"
                 type="text"
-                placeholder="Enter 6-digit code"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                maxLength={6}
-                className="text-center text-lg tracking-widest"
+                placeholder="Enter verification token"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                className="text-center"
+                disabled={isSubmitting}
                 required
               />
               <p className="text-sm text-gray-500 text-center">
-                The OTP code is valid for 10 minutes
+                Check your email for the verification link or enter the token manually.
               </p>
             </div>
           </CardContent>
@@ -70,7 +88,7 @@ const VerifyEmail = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !token}
             >
               {isSubmitting ? "Verifying..." : "Verify Email"}
             </Button>

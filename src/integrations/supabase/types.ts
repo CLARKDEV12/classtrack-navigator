@@ -9,7 +9,140 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean
+          recipient_id: string | null
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          recipient_id?: string | null
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          recipient_id?: string | null
+          sender_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          approved: boolean
+          created_at: string
+          email: string
+          id: string
+          name: string
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          approved?: boolean
+          created_at?: string
+          email: string
+          id: string
+          name: string
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          approved?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
+      rooms: {
+        Row: {
+          building: string
+          capacity: number
+          created_at: string
+          floor: number
+          has_projector: boolean
+          has_whiteboard: boolean
+          id: string
+          name: string
+          room_number: string
+        }
+        Insert: {
+          building: string
+          capacity: number
+          created_at?: string
+          floor: number
+          has_projector?: boolean
+          has_whiteboard?: boolean
+          id?: string
+          name: string
+          room_number: string
+        }
+        Update: {
+          building?: string
+          capacity?: number
+          created_at?: string
+          floor?: number
+          has_projector?: boolean
+          has_whiteboard?: boolean
+          id?: string
+          name?: string
+          room_number?: string
+        }
+        Relationships: []
+      }
+      schedules: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_time: string
+          id: string
+          room_id: string
+          start_time: string
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_time: string
+          id?: string
+          room_id: string
+          start_time: string
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_time?: string
+          id?: string
+          room_id?: string
+          start_time?: string
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedules_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +151,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "student" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never

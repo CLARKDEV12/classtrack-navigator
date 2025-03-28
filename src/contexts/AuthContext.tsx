@@ -1,6 +1,9 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { Profile } from '@/types/supabase';
 
 type UserRole = 'student' | 'admin' | null;
 
@@ -34,44 +37,108 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for stored user on initial load
+  // Initialize authentication and set up listener
   useEffect(() => {
-    const storedUser = localStorage.getItem('classroomTracker_user');
-    if (storedUser) {
-      try {
-        setCurrentUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Failed to parse stored user:", error);
-        localStorage.removeItem('classroomTracker_user');
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        setSession(currentSession);
+        
+        if (currentSession?.user) {
+          try {
+            // Fetch user profile after a slight delay to avoid Supabase auth deadlocks
+            setTimeout(async () => {
+              const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', currentSession.user.id)
+                .single();
+              
+              if (error) {
+                console.error('Error fetching user profile:', error);
+                return;
+              }
+              
+              if (data) {
+                const profile = data as Profile;
+                setCurrentUser({
+                  id: profile.id,
+                  email: profile.email,
+                  name: profile.name,
+                  role: profile.role,
+                  approved: profile.approved
+                });
+              }
+            }, 0);
+          } catch (error) {
+            console.error('Error in auth state change:', error);
+          }
+        } else {
+          setCurrentUser(null);
+        }
       }
-    }
-    setIsLoading(false);
+    );
+
+    // Check for existing session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        setSession(initialSession);
+        
+        if (initialSession?.user) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', initialSession.user.id)
+            .single();
+          
+          if (error) {
+            console.error('Error fetching user profile:', error);
+            setCurrentUser(null);
+          } else if (data) {
+            const profile = data as Profile;
+            setCurrentUser({
+              id: profile.id,
+              email: profile.email,
+              name: profile.name,
+              role: profile.role,
+              approved: profile.approved
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    initializeAuth();
+    
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
-  // Mock functions for authentication (to be replaced with Supabase)
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Mock login - Replace with Supabase
-      const mockUsers = [
-        { id: '1', email: 'admin@example.com', role: 'admin', name: 'Admin User', approved: true },
-        { id: '2', email: 'student@example.com', role: 'student', name: 'Student User', approved: true }
-      ];
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
       
-      const user = mockUsers.find(u => u.email === email);
+      // User profile will be set via the onAuthStateChange listener
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
       
-      if (user && password === 'password') {
-        setCurrentUser(user as User);
-        localStorage.setItem('classroomTracker_user', JSON.stringify(user));
-        toast({
-          title: "Login Successful",
-          description: `Welcome back, ${user.name}!`,
-        });
-      } else {
-        throw new Error('Invalid email or password');
-      }
     } catch (error) {
       console.error("Login error:", error);
       toast({
@@ -88,24 +155,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string, name: string, role: UserRole) => {
     setIsLoading(true);
     try {
-      // Mock registration - Replace with Supabase
-      // In a real app, we would create the user in the database
-      const newUser = {
-        id: Math.random().toString(36).substr(2, 9),
+      const { data, error } = await supabase.auth.signUp({
         email,
-        name,
-        role,
-        approved: false
-      };
+        password,
+        options: {
+          data: {
+            name,
+            role,
+          },
+        }
+      });
+
+      if (error) throw error;
       
-      // Simulate email verification step
       toast({
         title: "Registration Successful",
-        description: "An OTP has been sent to your email for verification.",
+        description: "Please check your email for verification.",
       });
       
-      // Store pending registration in local storage for demo purposes
-      localStorage.setItem('classroomTracker_pendingUser', JSON.stringify({ ...newUser, password }));
     } catch (error) {
       console.error("Registration error:", error);
       toast({
@@ -118,54 +185,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
     }
   };
-
+  
   const verifyEmail = async (otp: string) => {
     setIsLoading(true);
     try {
-      // Mock OTP verification - Replace with Supabase
-      const pendingUserStr = localStorage.getItem('classroomTracker_pendingUser');
+      // Assuming the OTP is passed in the URL as a token
+      const { data, error } = await supabase.auth.verifyOtp({
+        token_hash: otp,
+        type: 'email',
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email Verified",
+        description: "Your account is pending admin approval.",
+      });
       
-      if (!pendingUserStr) {
-        throw new Error('No pending registration found');
-      }
-      
-      const pendingUser = JSON.parse(pendingUserStr);
-      
-      // For demo purposes, any 6-digit OTP is valid
-      if (otp.length === 6 && /^\d+$/.test(otp)) {
-        // In a real app, we would verify the OTP with the backend
-        // and mark the user as verified
-        
-        toast({
-          title: "Email Verified",
-          description: "Your account is pending admin approval.",
-        });
-        
-        // Clear the pending user from local storage
-        localStorage.removeItem('classroomTracker_pendingUser');
-      } else {
-        throw new Error('Invalid OTP. Please try again.');
-      }
     } catch (error) {
       console.error("Verification error:", error);
       toast({
         variant: "destructive",
         title: "Verification Failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description: error instanceof Error ? error.message : "Invalid or expired verification code",
       });
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
-
-  const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('classroomTracker_user');
-    toast({
-      title: "Logged Out",
-      description: "You have been logged out successfully.",
-    });
+  
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      setCurrentUser(null);
+      toast({
+        title: "Logged Out",
+        description: "You have been logged out successfully.",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      });
+    }
   };
 
   const value = {
