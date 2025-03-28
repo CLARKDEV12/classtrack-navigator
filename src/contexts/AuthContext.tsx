@@ -4,6 +4,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { Profile } from '@/types/supabase';
+import { useNavigate } from 'react-router-dom';
 
 type UserRole = 'student' | 'admin' | null;
 
