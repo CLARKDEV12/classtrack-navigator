@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { School, Mail } from "lucide-react";
+import { School, Mail, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -45,6 +45,10 @@ const VerifyEmail = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await handleVerification(token);
+  };
+
+  const handleGoBack = () => {
+    navigate("/login");
   };
 
   return (
@@ -91,6 +95,16 @@ const VerifyEmail = () => {
               disabled={isSubmitting || !token}
             >
               {isSubmitting ? "Verifying..." : "Verify Email"}
+            </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={handleGoBack}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Login
             </Button>
           </CardFooter>
         </form>
