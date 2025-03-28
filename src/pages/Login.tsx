@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,17 +12,20 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, currentUser, isAuthenticated } = useAuth();
 
   // Redirect based on role if already authenticated
   useEffect(() => {
     if (isAuthenticated && currentUser) {
+      console.log("Login page: User authenticated with role", currentUser.role);
       redirectBasedOnRole(currentUser.role);
     }
-  }, [isAuthenticated, currentUser]);
+  }, [isAuthenticated, currentUser, navigate]);
 
   // Function to redirect based on user role
   const redirectBasedOnRole = (role: string | null) => {
+    console.log("Redirecting based on role:", role);
     if (role === 'admin') {
       navigate('/admin');
     } else if (role === 'student') {
@@ -40,7 +43,7 @@ const Login = () => {
     setIsSubmitting(true);
     try {
       await login(email, password);
-      
+      console.log("Login successful, waiting for auth state to update");
       // The useEffect hook will handle the redirect once the currentUser is set
     } catch (error) {
       // Error handling is done in AuthContext

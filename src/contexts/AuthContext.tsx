@@ -1,10 +1,8 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { Profile } from '@/types/supabase';
-import { useNavigate } from 'react-router-dom';
 
 type UserRole = 'student' | 'admin' | null;
 
@@ -72,6 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   role: profile.role,
                   approved: profile.approved
                 });
+                console.log('User profile loaded:', profile);
               }
             }, 0);
           } catch (error) {
@@ -108,6 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               role: profile.role,
               approved: profile.approved
             });
+            console.log('Initial user profile loaded:', profile);
           }
         }
       } catch (error) {
