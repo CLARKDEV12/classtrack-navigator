@@ -1,21 +1,27 @@
 
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 interface AdminRouteProps {
   children: React.ReactNode;
 }
 
 const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
-  const { currentUser, isLoading } = useAuth();
+  const { currentUser, isLoading, isAuthenticated } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log("Admin route check:", { isAuthenticated, role: currentUser?.role });
+  }, [currentUser, isAuthenticated]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
   // If not logged in, redirect to login
-  if (!currentUser) {
+  if (!isAuthenticated || !currentUser) {
     return <Navigate to="/login" state={{ from: location }} />;
   }
 

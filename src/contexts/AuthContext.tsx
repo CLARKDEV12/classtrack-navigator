@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,15 +42,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Initialize authentication and set up listener
   useEffect(() => {
+    console.log("Setting up auth state listener");
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
+        console.log("Auth state changed:", event);
         setSession(currentSession);
         
         if (currentSession?.user) {
-          try {
-            // Fetch user profile after a slight delay to avoid Supabase auth deadlocks
-            setTimeout(async () => {
+          // Fetch user profile after a slight delay to avoid Supabase auth deadlocks
+          setTimeout(async () => {
+            try {
               const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
@@ -72,10 +75,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 });
                 console.log('User profile loaded:', profile);
               }
-            }, 0);
-          } catch (error) {
-            console.error('Error in auth state change:', error);
-          }
+            } catch (error) {
+              console.error('Error in auth state change:', error);
+            }
+          }, 0);
         } else {
           setCurrentUser(null);
         }
@@ -85,7 +88,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for existing session
     const initializeAuth = async () => {
       try {
+        console.log("Checking for existing session");
         const { data: { session: initialSession } } = await supabase.auth.getSession();
+        console.log("Initial session:", initialSession ? "exists" : "none");
         setSession(initialSession);
         
         if (initialSession?.user) {

@@ -1,64 +1,185 @@
 
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { School, Menu, X } from "lucide-react";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
-import { School, LogOut, User } from "lucide-react";
 
 const AppHeader = () => {
-  const { currentUser, logout } = useAuth();
-  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated, currentUser, logout } = useAuth();
+  const isAdmin = currentUser?.role === "admin";
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <Link to="/" className="flex items-center">
-                <School className="h-8 w-8 text-edu-primary mr-2" />
-                <span className="text-xl font-bold text-edu-dark">ClassTrack</span>
+    <header className="bg-edu-primary text-white p-4 shadow-md">
+      <div className="container mx-auto flex justify-between items-center">
+        <Link to="/" className="flex items-center gap-2">
+          <School className="h-6 w-6" />
+          <span className="font-bold text-xl">ClassTrack</span>
+        </Link>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-6">
+          {isAuthenticated ? (
+            <>
+              <Link 
+                to={isAdmin ? "/admin" : "/dashboard"}
+                className="text-white hover:text-gray-200"
+              >
+                {isAdmin ? "Admin Dashboard" : "Dashboard"}
               </Link>
-            </div>
-          </div>
-          
-          <div className="flex items-center">
-            {currentUser ? (
-              <div className="flex items-center space-x-4">
-                <div className="text-sm font-medium text-gray-700 hidden sm:block">
-                  <span className="mr-1">Welcome,</span>
-                  <span className="text-edu-primary">{currentUser.name}</span>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleLogout}
-                  className="flex items-center"
-                >
-                  <LogOut className="h-4 w-4 mr-1" />
-                  <span>Logout</span>
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <Button asChild variant="ghost" size="sm">
-                  <Link to="/login" className="flex items-center">
-                    <User className="h-4 w-4 mr-1" />
-                    <span>Login</span>
+              
+              {isAdmin ? (
+                <>
+                  <Link to="/admin/rooms" className="text-white hover:text-gray-200">
+                    Rooms
                   </Link>
-                </Button>
-                <Button asChild variant="default" size="sm">
-                  <Link to="/register">Register</Link>
+                  <Link to="/admin/schedules" className="text-white hover:text-gray-200">
+                    Schedules
+                  </Link>
+                  <Link to="/admin/users" className="text-white hover:text-gray-200">
+                    Users
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/dashboard" className="text-white hover:text-gray-200">
+                    Find Rooms
+                  </Link>
+                </>
+              )}
+              
+              <Link to="/chat" className="text-white hover:text-gray-200">
+                Chat
+              </Link>
+              
+              <div className="ml-4 flex items-center gap-2">
+                <span className="text-sm">{currentUser.name}</span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="bg-transparent border-white text-white hover:bg-edu-dark hover:border-transparent"
+                  onClick={handleLogout}
+                >
+                  Log out
                 </Button>
               </div>
-            )}
-          </div>
-        </div>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="text-white hover:text-gray-200">
+                Log in
+              </Link>
+              <Link to="/register">
+                <Button variant="secondary" size="sm">
+                  Register
+                </Button>
+              </Link>
+            </>
+          )}
+        </nav>
+
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden text-white"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
       </div>
+
+      {/* Mobile Navigation */}
+      {isMenuOpen && (
+        <div className="md:hidden mt-4 flex flex-col gap-4">
+          {isAuthenticated ? (
+            <>
+              <Link 
+                to={isAdmin ? "/admin" : "/dashboard"}
+                className="text-white hover:text-gray-200 py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {isAdmin ? "Admin Dashboard" : "Dashboard"}
+              </Link>
+              
+              {isAdmin ? (
+                <>
+                  <Link 
+                    to="/admin/rooms" 
+                    className="text-white hover:text-gray-200 py-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Rooms
+                  </Link>
+                  <Link 
+                    to="/admin/schedules" 
+                    className="text-white hover:text-gray-200 py-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Schedules
+                  </Link>
+                  <Link 
+                    to="/admin/users" 
+                    className="text-white hover:text-gray-200 py-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Users
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link 
+                    to="/dashboard" 
+                    className="text-white hover:text-gray-200 py-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Find Rooms
+                  </Link>
+                </>
+              )}
+              
+              <Link 
+                to="/chat" 
+                className="text-white hover:text-gray-200 py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Chat
+              </Link>
+              
+              <Button 
+                variant="outline" 
+                className="bg-transparent border-white text-white hover:bg-edu-dark hover:border-transparent mt-2"
+                onClick={() => {
+                  handleLogout();
+                  setIsMenuOpen(false);
+                }}
+              >
+                Log out ({currentUser.name})
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link 
+                to="/login" 
+                className="text-white hover:text-gray-200 py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Log in
+              </Link>
+              <Link 
+                to="/register" 
+                className="text-white hover:text-gray-200 py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Register
+              </Link>
+            </>
+          )}
+        </div>
+      )}
     </header>
   );
 };

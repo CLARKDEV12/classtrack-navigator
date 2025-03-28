@@ -13,15 +13,15 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, currentUser, isAuthenticated } = useAuth();
+  const { login, currentUser, isAuthenticated, isLoading } = useAuth();
 
   // Redirect based on role if already authenticated
   useEffect(() => {
-    if (isAuthenticated && currentUser) {
+    if (!isLoading && isAuthenticated && currentUser) {
       console.log("Login page: User authenticated with role", currentUser.role);
       redirectBasedOnRole(currentUser.role);
     }
-  }, [isAuthenticated, currentUser, navigate]);
+  }, [isLoading, isAuthenticated, currentUser, navigate]);
 
   // Function to redirect based on user role
   const redirectBasedOnRole = (role: string | null) => {
