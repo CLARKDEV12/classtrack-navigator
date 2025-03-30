@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -174,6 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name,
             role,
           },
+          // Explicitly disable redirect to use OTP method
           emailRedirectTo: undefined,
         }
       });
@@ -204,6 +206,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       console.log("Verifying email with token:", token);
+      
+      // Use verifyOtp specifically for token-based verification
       const { data, error } = await supabase.auth.verifyOtp({
         token_hash: token,
         type: 'email',
