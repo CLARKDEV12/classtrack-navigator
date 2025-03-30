@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { School, Mail, ArrowLeft } from "lucide-react";
+import { School, Mail, ArrowLeft, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const VerifyEmail = () => {
@@ -90,54 +90,78 @@ const VerifyEmail = () => {
             <CardTitle className="text-2xl font-bold text-gray-800">ClassTrack</CardTitle>
           </div>
           <div className="bg-blue-100 rounded-full p-3 mb-2">
-            <Mail className="h-6 w-6 text-blue-600" />
+            {verificationSuccess ? (
+              <Check className="h-6 w-6 text-green-600" />
+            ) : (
+              <Mail className="h-6 w-6 text-blue-600" />
+            )}
           </div>
-          <CardTitle className="text-xl">Verify Your Email</CardTitle>
+          <CardTitle className="text-xl">
+            {verificationSuccess ? "Email Verified" : "Verify Your Email"}
+          </CardTitle>
           <CardDescription>
-            {token ? "Verifying your email address..." : "Enter the verification token from your email"}
+            {verificationSuccess 
+              ? "Your email has been verified successfully!" 
+              : "Enter the verification token from your email"}
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="token" className="text-sm font-medium">
-                Verification Token
-              </label>
-              <Input
-                id="token"
-                type="text"
-                placeholder="Enter verification token"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                className="text-center"
-                disabled={isSubmitting || verificationSuccess}
-                required
-              />
-              <p className="text-sm text-gray-500 text-center">
-                Check your email for the verification token and enter it above.
-              </p>
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={isSubmitting || !token || verificationSuccess}
-            >
-              {isSubmitting ? "Verifying..." : "Verify Email"}
-            </Button>
-            
+        {!verificationSuccess && (
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="token" className="text-sm font-medium">
+                  Verification Token
+                </label>
+                <Input
+                  id="token"
+                  type="text"
+                  placeholder="Enter verification token"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  className="text-center"
+                  disabled={isSubmitting}
+                  required
+                />
+                <p className="text-sm text-gray-500 text-center">
+                  Please check your email for the verification token and enter it above.
+                </p>
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-4">
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={isSubmitting || !token}
+              >
+                {isSubmitting ? "Verifying..." : "Verify Email"}
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleGoBack}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Login
+              </Button>
+            </CardFooter>
+          </form>
+        )}
+        {verificationSuccess && (
+          <CardContent className="space-y-4 text-center">
+            <p className="text-sm text-gray-700">
+              You will be redirected to your dashboard automatically.
+            </p>
             <Button
               type="button"
-              variant="outline"
-              className="w-full"
-              onClick={handleGoBack}
+              className="w-full bg-blue-600 hover:bg-blue-700 mt-4"
+              onClick={() => redirectBasedOnRole(currentUser?.role)}
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Login
+              Go to Dashboard
             </Button>
-          </CardFooter>
-        </form>
+          </CardContent>
+        )}
       </Card>
     </div>
   );
