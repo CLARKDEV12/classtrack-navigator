@@ -11,22 +11,27 @@ import { toast } from "@/hooks/use-toast";
 const VerifyEmail = () => {
   const [token, setToken] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { verifyEmail, currentUser, isAuthenticated } = useAuth();
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated and verification was successful
   useEffect(() => {
-    if (isAuthenticated && currentUser) {
+    if (verificationSuccess && isAuthenticated && currentUser) {
+      console.log("Verification successful, redirecting based on role:", currentUser.role);
+      redirectBasedOnRole(currentUser.role);
+    } else if (isAuthenticated && currentUser && !verificationSuccess) {
+      // If already authenticated but not from this verification process
       console.log("User already authenticated, redirecting based on role:", currentUser.role);
       redirectBasedOnRole(currentUser.role);
     }
-  }, [isAuthenticated, currentUser]);
+  }, [verificationSuccess, isAuthenticated, currentUser]);
 
   // Extract token from URL if present
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const urlToken = params.get('token_hash');
+    const urlToken = params.get('token_hash') || params.get('token');
     
     if (urlToken) {
       console.log("Token found in URL:", urlToken);
@@ -52,13 +57,13 @@ const VerifyEmail = () => {
     setIsSubmitting(true);
     try {
       await verifyEmail(verificationToken);
-      // User data is loaded in AuthContext's verifyEmail method
+      setVerificationSuccess(true);
       toast({
         title: "Verification Successful", 
         description: "You'll be redirected to your dashboard."
       });
       
-      // We'll let the useEffect hook handle redirection once currentUser is updated
+      // Redirection will happen in the useEffect
     } catch (error) {
       console.error("Verification error:", error);
       // Error is handled in the AuthContext
@@ -105,7 +110,7 @@ const VerifyEmail = () => {
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 className="text-center"
-                disabled={isSubmitting}
+                disabled={isSubmitting || verificationSuccess}
                 required
               />
               <p className="text-sm text-gray-500 text-center">
@@ -117,7 +122,7 @@ const VerifyEmail = () => {
             <Button
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={isSubmitting || !token}
+              disabled={isSubmitting || !token || verificationSuccess}
             >
               {isSubmitting ? "Verifying..." : "Verify Email"}
             </Button>

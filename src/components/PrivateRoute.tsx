@@ -22,9 +22,6 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
         console.log("PrivateRoute - Redirecting admin to admin dashboard");
         navigate('/admin');
       }
-      
-      // For regular routes that both roles can access
-      // No additional redirects needed
     }
   }, [isLoading, isAuthenticated, currentUser, location.pathname, navigate]);
 

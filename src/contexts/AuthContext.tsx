@@ -2,7 +2,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { Session } from '@supabase/supabase-js';
 import { Profile } from '@/types/supabase';
 
 type UserRole = 'student' | 'admin' | null;
@@ -43,9 +43,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Initialize authentication and set up listener
   useEffect(() => {
     console.log("Setting up auth state listener");
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession?.user?.id);
         setSession(currentSession);
         
@@ -61,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               
               if (error) {
                 console.error('Error fetching user profile:', error);
+                setCurrentUser(null);
                 return;
               }
               
@@ -74,9 +76,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   approved: profile.approved
                 });
                 console.log('User profile loaded:', profile);
+              } else {
+                console.log('No profile found for user:', currentSession.user.id);
+                setCurrentUser(null);
               }
             } catch (error) {
               console.error('Error in auth state change:', error);
+              setCurrentUser(null);
             }
           }, 0);
         } else {
@@ -113,6 +119,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               approved: profile.approved
             });
             console.log('Initial user profile loaded:', profile);
+          } else {
+            console.log('No profile found for user:', initialSession.user.id);
+            setCurrentUser(null);
           }
         }
       } catch (error) {
@@ -139,7 +148,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
       
-      // User profile will be set via the onAuthStateChange listener
       toast({
         title: "Login Successful",
         description: "Welcome back!",
@@ -171,6 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name,
             role,
           },
+          // Important: Include the verification token directly in the email
           emailRedirectTo: `${window.location.origin}/verify-email`,
         }
       });
@@ -181,7 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       toast({
         title: "Registration Successful",
-        description: "Please check your email for the verification token.",
+        description: "Please check your email for the verification token. It will be included directly in the email.",
       });
       
     } catch (error) {
@@ -228,6 +237,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role: profileData.role,
             approved: profileData.approved
           });
+          console.log('Profile loaded after verification:', profileData);
+        } else {
+          console.log('No profile found after verification for user:', data.user.id);
         }
       }
 
