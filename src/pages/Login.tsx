@@ -21,11 +21,11 @@ const Login = () => {
       console.log("Login page: User authenticated with role", currentUser.role);
       redirectBasedOnRole(currentUser.role);
     }
-  }, [isLoading, isAuthenticated, currentUser, navigate]);
+  }, [isLoading, isAuthenticated, currentUser]);
 
   // Function to redirect based on user role
   const redirectBasedOnRole = (role: string | null) => {
-    console.log("Redirecting based on role:", role);
+    console.log("Login - Redirecting based on role:", role);
     if (role === 'admin') {
       navigate('/admin');
     } else if (role === 'student') {
@@ -46,7 +46,6 @@ const Login = () => {
       console.log("Login successful, waiting for auth state to update");
       // The useEffect hook will handle the redirect once the currentUser is set
     } catch (error) {
-      // Error handling is done in AuthContext
       console.error("Login error:", error);
     } finally {
       setIsSubmitting(false);
@@ -58,8 +57,8 @@ const Login = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 flex flex-col items-center">
           <div className="flex items-center gap-2 mb-2">
-            <School className="h-10 w-10 text-edu-primary" />
-            <CardTitle className="text-2xl font-bold text-edu-dark">ClassTrack</CardTitle>
+            <School className="h-10 w-10 text-blue-600" />
+            <CardTitle className="text-2xl font-bold text-gray-800">ClassTrack</CardTitle>
           </div>
           <CardDescription>
             Enter your credentials to access your account
@@ -98,14 +97,14 @@ const Login = () => {
           <CardFooter className="flex flex-col space-y-4">
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-blue-600 hover:bg-blue-700"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Logging in..." : "Log in"}
             </Button>
             <div className="text-sm text-center">
               Don't have an account?{" "}
-              <Link to="/register" className="text-edu-primary hover:underline">
+              <Link to="/register" className="text-blue-600 hover:underline">
                 Register here
               </Link>
             </div>

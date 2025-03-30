@@ -14,10 +14,17 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && currentUser) {
+      console.log("PrivateRoute - Current user role:", currentUser.role);
+      console.log("PrivateRoute - Current path:", location.pathname);
+      
       // For student routes, redirect admin to admin dashboard
       if (location.pathname === '/dashboard' && currentUser.role === 'admin') {
+        console.log("PrivateRoute - Redirecting admin to admin dashboard");
         navigate('/admin');
       }
+      
+      // For regular routes that both roles can access
+      // No additional redirects needed
     }
   }, [isLoading, isAuthenticated, currentUser, location.pathname, navigate]);
 
@@ -26,7 +33,8 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} />;
+    console.log("PrivateRoute - Not authenticated, redirecting to login");
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

@@ -36,6 +36,7 @@ const Register = () => {
 
     setIsSubmitting(true);
     try {
+      console.log("Registering new user:", { email, name, role });
       await register(email, password, name, role);
       navigate("/verify-email");
     } catch (error) {
@@ -51,8 +52,8 @@ const Register = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 flex flex-col items-center">
           <div className="flex items-center gap-2 mb-2">
-            <School className="h-10 w-10 text-edu-primary" />
-            <CardTitle className="text-2xl font-bold text-edu-dark">ClassTrack</CardTitle>
+            <School className="h-10 w-10 text-blue-600" />
+            <CardTitle className="text-2xl font-bold text-gray-800">ClassTrack</CardTitle>
           </div>
           <CardDescription>
             Create an account to get started
@@ -132,14 +133,14 @@ const Register = () => {
           <CardFooter className="flex flex-col space-y-4">
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-blue-600 hover:bg-blue-700"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Creating Account..." : "Register"}
             </Button>
             <div className="text-sm text-center">
               Already have an account?{" "}
-              <Link to="/login" className="text-edu-primary hover:underline">
+              <Link to="/login" className="text-blue-600 hover:underline">
                 Log in
               </Link>
             </div>

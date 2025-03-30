@@ -22,7 +22,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string, role: UserRole) => Promise<void>;
   logout: () => void;
-  verifyEmail: (otp: string) => Promise<void>;
+  verifyEmail: (token: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        console.log("Auth state changed:", event);
+        console.log("Auth state changed:", event, currentSession?.user?.id);
         setSession(currentSession);
         
         if (currentSession?.user) {
@@ -161,6 +161,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string, name: string, role: UserRole) => {
     setIsLoading(true);
     try {
+      console.log("Registering with:", { email, name, role });
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -169,14 +171,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name,
             role,
           },
+          emailRedirectTo: `${window.location.origin}/verify-email`,
         }
       });
 
       if (error) throw error;
+
+      console.log("Registration response:", data);
       
       toast({
         title: "Registration Successful",
-        description: "Please check your email for verification.",
+        description: "Please check your email for the verification token.",
       });
       
     } catch (error) {
@@ -192,20 +197,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  const verifyEmail = async (otp: string) => {
+  const verifyEmail = async (token: string) => {
     setIsLoading(true);
     try {
-      // Assuming the OTP is passed in the URL as a token
+      console.log("Verifying email with token:", token);
       const { data, error } = await supabase.auth.verifyOtp({
-        token_hash: otp,
+        token_hash: token,
         type: 'email',
       });
 
       if (error) throw error;
 
+      console.log("Verification response:", data);
+
+      // Fetch the user profile after verification
+      if (data.user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (profileError) {
+          console.error('Error fetching user profile after verification:', profileError);
+        } else if (profileData) {
+          setCurrentUser({
+            id: profileData.id,
+            email: profileData.email,
+            name: profileData.name,
+            role: profileData.role,
+            approved: profileData.approved
+          });
+        }
+      }
+
       toast({
         title: "Email Verified",
-        description: "Your account is pending admin approval.",
+        description: "Your account is now verified.",
       });
       
     } catch (error) {

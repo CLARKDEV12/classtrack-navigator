@@ -7,14 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { School, Mail, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const VerifyEmail = () => {
   const [token, setToken] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { verifyEmail } = useAuth();
+  const { verifyEmail, currentUser, isAuthenticated } = useAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      console.log("User already authenticated, redirecting based on role:", currentUser.role);
+      redirectBasedOnRole(currentUser.role);
+    }
+  }, [isAuthenticated, currentUser]);
 
   // Extract token from URL if present
   useEffect(() => {
@@ -22,10 +29,22 @@ const VerifyEmail = () => {
     const urlToken = params.get('token_hash');
     
     if (urlToken) {
+      console.log("Token found in URL:", urlToken);
       setToken(urlToken);
       handleVerification(urlToken);
     }
   }, [location]);
+
+  const redirectBasedOnRole = (role: string | null) => {
+    console.log("Redirecting after verification based on role:", role);
+    if (role === 'admin') {
+      navigate('/admin');
+    } else if (role === 'student') {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
+    }
+  };
 
   const handleVerification = async (verificationToken: string) => {
     if (!verificationToken) return;
@@ -33,7 +52,13 @@ const VerifyEmail = () => {
     setIsSubmitting(true);
     try {
       await verifyEmail(verificationToken);
-      navigate("/login");
+      // User data is loaded in AuthContext's verifyEmail method
+      toast({
+        title: "Verification Successful", 
+        description: "You'll be redirected to your dashboard."
+      });
+      
+      // We'll let the useEffect hook handle redirection once currentUser is updated
     } catch (error) {
       console.error("Verification error:", error);
       // Error is handled in the AuthContext
@@ -56,11 +81,11 @@ const VerifyEmail = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 flex flex-col items-center">
           <div className="flex items-center gap-2 mb-2">
-            <School className="h-10 w-10 text-edu-primary" />
-            <CardTitle className="text-2xl font-bold text-edu-dark">ClassTrack</CardTitle>
+            <School className="h-10 w-10 text-blue-600" />
+            <CardTitle className="text-2xl font-bold text-gray-800">ClassTrack</CardTitle>
           </div>
           <div className="bg-blue-100 rounded-full p-3 mb-2">
-            <Mail className="h-6 w-6 text-edu-primary" />
+            <Mail className="h-6 w-6 text-blue-600" />
           </div>
           <CardTitle className="text-xl">Verify Your Email</CardTitle>
           <CardDescription>
@@ -84,14 +109,14 @@ const VerifyEmail = () => {
                 required
               />
               <p className="text-sm text-gray-500 text-center">
-                Check your email for the verification link or enter the token manually.
+                Check your email for the verification token and enter it above.
               </p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-blue-600 hover:bg-blue-700"
               disabled={isSubmitting || !token}
             >
               {isSubmitting ? "Verifying..." : "Verify Email"}
