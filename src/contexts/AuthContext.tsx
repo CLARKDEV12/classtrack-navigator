@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,18 +39,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize authentication and set up listener
   useEffect(() => {
     console.log("Setting up auth state listener");
     
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession?.user?.id);
         setSession(currentSession);
         
         if (currentSession?.user) {
-          // Fetch user profile after a slight delay to avoid Supabase auth deadlocks
           setTimeout(async () => {
             try {
               const { data, error } = await supabase
@@ -91,7 +87,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Check for existing session
     const initializeAuth = async () => {
       try {
         console.log("Checking for existing session");
@@ -171,7 +166,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log("Registering with:", { email, name, role });
       
-      // Important: Do NOT include emailRedirectTo to ensure the token is shown in the email
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -180,6 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name,
             role,
           },
+          emailRedirectTo: undefined,
         }
       });
 
@@ -218,7 +213,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       console.log("Verification response:", data);
 
-      // Fetch the user profile after verification
       if (data.user) {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
