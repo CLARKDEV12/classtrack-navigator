@@ -171,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log("Registering with:", { email, name, role });
       
-      // Updated: We're including custom email template info to show the token directly
+      // Important: Do NOT include emailRedirectTo to ensure the token is shown in the email
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -180,8 +180,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name,
             role,
           },
-          // Do not include emailRedirectTo to prevent redirecting to the site
-          emailRedirectTo: undefined,
         }
       });
 
@@ -191,7 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       toast({
         title: "Registration Successful",
-        description: "Please check your email for the verification token. The token will be provided directly in the email content.",
+        description: "Please check your email for the verification code. Enter the 6-digit code on the verification page.",
       });
       
     } catch (error) {

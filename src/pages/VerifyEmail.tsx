@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { School, Mail, ArrowLeft, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const VerifyEmail = () => {
   const [token, setToken] = useState("");
@@ -66,7 +67,11 @@ const VerifyEmail = () => {
       // Redirection will happen in the useEffect
     } catch (error) {
       console.error("Verification error:", error);
-      // Error is handled in the AuthContext
+      toast({
+        variant: "destructive",
+        title: "Verification Failed", 
+        description: "The verification code is invalid or expired. Please try again."
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -112,29 +117,42 @@ const VerifyEmail = () => {
                 <label htmlFor="token" className="text-sm font-medium">
                   Verification Token
                 </label>
-                <Input
-                  id="token"
-                  type="text"
-                  placeholder="Enter verification token"
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  className="text-center"
-                  disabled={isSubmitting}
-                  required
-                />
-                <p className="text-sm text-gray-500 text-center">
-                  Please check your email for the verification token and enter it above.
-                </p>
+                <div className="flex justify-center">
+                  <InputOTP maxLength={6} value={token} onChange={setToken}>
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                <div className="text-sm text-blue-600 text-center mt-4 bg-blue-50 p-3 rounded-md">
+                  <p className="font-semibold">Please check your email</p>
+                  <p className="text-gray-600 mt-1">
+                    We've sent a 6-digit verification code to your email address.
+                    Enter the code above to verify your account.
+                  </p>
+                </div>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
               <Button
                 type="submit"
                 className="w-full bg-blue-600 hover:bg-blue-700"
-                disabled={isSubmitting || !token}
+                disabled={isSubmitting || token.length < 6}
               >
                 {isSubmitting ? "Verifying..." : "Verify Email"}
               </Button>
+              
+              <div className="text-center w-full text-sm text-gray-500">
+                <p>Didn't receive a code?</p>
+                <Link to="/login" className="text-blue-600 hover:underline">
+                  Try logging in again
+                </Link>
+              </div>
               
               <Button
                 type="button"
